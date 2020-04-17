@@ -1,5 +1,5 @@
 '''In this file is written the following operations:
-	*List summation {'for_vectors': sum_1d, '2d': matrix_sum}
+	*List summation {'for_vectors': sum_1d, 'for_matrix': sum}
 	*1d-vector product
 '''
 
