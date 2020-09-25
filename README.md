@@ -10,3 +10,5 @@ Recursion_fibonacci -> Two forms of recursion programming, in which you can easi
 Try to wait for the 40th number of the sequence using both methods and you'll see the startling difference.
 
 VectorOp -> Very simple vector operations. This may help those who are starting to write object oriented codes.
+
+sampling -> Has an easy example of sampling to show the Metropolis criteria.
