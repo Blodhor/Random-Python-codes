@@ -8,7 +8,7 @@ class Sampling:
 		self.b = b
 		self.nome = "Amostragem aleatória"
 
-		#desta maneira aumenta o numero de pontos, sem alterar o intervalo
+		#increasing the number os samples without any changes to the sampling's region of this example
 		X = [x/fator for x in range(int(self.a*fator),int(self.b*fator))]
 		Y = self.samples(X)
 
@@ -51,7 +51,7 @@ class MCMC_sampling(Sampling):
 		for ax in axs.flat:
 			ax.set(xlabel='Indice', ylabel='Amostra')
 
-		#como sao os mesmo eixos, o comando abaixo esconde as redundancias
+		#Hidding one of the plot's labels because we are comparing using the same scale
 		for ax in axs.flat:
 			ax.label_outer()
 
@@ -61,19 +61,19 @@ class MCMC_sampling(Sampling):
 		self.nome = "Amostragem MCMC"
 		#random.seed()
 		samp = np.zeros(len(x_r))
-		#ruido muito pequeno gera uma amostragem ruim
+		#to little a noise scale yields bad sampling
 		ruido = abs(self.a -self.b)/5.
 
-		#valor inicial
+		#initial value (guess or known)
 		samp[0] = 1.
-		#definindo a pdf no centro do intervalo
+		#defining the pdf, centering on our chosen range
 		esperanca = (self.a + self.b)/2.
 		desv_pad = abs(self.a -self.b)/4.
 		pdf = pgauss(esperanca,desv_pad)
 		
 		for i in range(1,len(x_r)):
 			prop = self.proposta(samp[i-1],ruido)
-			#criterio de Metropolis
+			#Metropolis criteria
 			razao_pdf = pdf(prop)/pdf(samp[i-1])
 			if razao_pdf > random.uniform(0,1):
 				samp[i] = prop
@@ -88,10 +88,9 @@ class MCMC_sampling(Sampling):
 		if self.a > self.b:
 			Ab = True
 		while t:
-			#norm.rvs faz uma amostragem de tamanho 'size' numa dist. normal centrada em 'loc' com desvio 'scale'
 			novo = anterior + norm.rvs(loc=0,scale=ruido,size=1)
 			if Ab:
-				#se 'novo' estiver no intervalo, retorne ele
+				#we are restricting the new sample to be within our chosen range of numbers
 				if novo >=self.b and novo <=self.a:
 					t = False
 			else:
