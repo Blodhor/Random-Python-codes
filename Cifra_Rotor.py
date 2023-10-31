@@ -2,7 +2,7 @@
 def Help():
 	'''Função simples de ajuda quando identifica algum erro'''
 	print("O argumento deve seguir o formato a seguir:\n")
-	print("python3 Cifra_Rotor.py modo n f1 f2 fn k1 l1 k2 l2 kn ln entrada saida\n")
+	print("python3 rotor.py modo n f1 f2 fn k1 l1 k2 l2 kn ln entrada saida\n")
 	print("modo: 'C' ou 'D', para cifrar ou decifrar\n")
 	print("n: Número de rotores de 1 a 5\n")
 	print("f1/.../fn: Frases usadas para inicializar os respectivos rotores\n")
@@ -30,7 +30,7 @@ def Args_rotor(arg=['rotor.py','C','2','fra1','fra2','k1','l1','k2','l2','ent','
 	else:
 		Help()
 
-def Lendo_entrada(inpt='inpt.txt',modo='D', byte_tam = 3):
+def Lendo_entrada(inpt='inpt.txt',modo='D',byte_tam = 1):
 	'''Auto explicativo não?'''
 
 	#caso a entrada nao seja um arquivo texto legivel
@@ -82,7 +82,7 @@ def S(modo='C',key_ini={'f':'BAUNILHA','k':1,'l':1},rotnum=1):
 
 def Rotor_girou(mdir='d',rotor=[1,2,3],l=1):
 	'''Girando o rotor utilizando apenas os indices evita de criar rotores novos,
-	mas como o rotor é pequeno (tamanho 256), a execução extra não faz muita diferença na velocidade.'''
+	mas como o rotor é pequeno, a execução extra não faz muita diferença na velocidade.'''
 	temp =[]
 	if mdir=='d':
 		move= l
@@ -97,6 +97,7 @@ def Rotor_girou(mdir='d',rotor=[1,2,3],l=1):
 def Cifra_rot(k=1,l=1,plaintext=['P','l','a'],rotor=[1,2,3],hexa=False,from_bin=False,cifrar_cifra=False):
 	'''Modificação por símbolo lido para inteiro com a função ord e cifragem disso com o rotor'''
 	cifra=''
+	#print(plaintext)
 	for i in range(len(plaintext)):
 		if from_bin:
 			indice = plaintext[i]
@@ -105,8 +106,8 @@ def Cifra_rot(k=1,l=1,plaintext=['P','l','a'],rotor=[1,2,3],hexa=False,from_bin=
 		else:
 			indice = ord(plaintext[i])
 		c=rotor[indice]
-		
-    if hexa:
+		#print("cif", plaintext[i], indice,c)
+		if hexa:
 			if c<16:
 				cifra += "%3s"%('0'+hex(c)[2:])	
 			else:
@@ -128,6 +129,7 @@ def Decifra_rot(k=1,l=1,cifra=['28','157','226'],rotor=[1,2,3],hexa=False,decifr
 	'''Inverso da função 'Cifra_rot'.'''
 	decifra=''
 	inv_rot= derot(rotor)
+	#print("cifrinha: ", cifra)
 	for i in range(len(cifra)):
 		if hexa:
 			cc = int(cifra[i], 16)
@@ -177,6 +179,8 @@ def Processamento(modo='D',chaves=[{'f':'GIROSCOPIO','k':1,'l':1}],plain=['p','l
 			r = S(modo=modo,key_ini=chaves[i],rotnum=rot_cnt)
 			# cifra no formato string
 			tout = Cifra_rot(k=chaves[i]['k'],l=chaves[i]['l'],plaintext=plain,rotor=r,hexa=hexadecimal,cifrar_cifra=cifrar_cifra,from_bin=from_binario)
+			#na cifragem a segunda rodada usa texto direto
+			from_binario = False
 		
 		# para (de)cifrar a cifra com o proximo rotor
 		plain = tout.split()
@@ -193,7 +197,7 @@ if __name__ == "__main__":
 	import sys
 	
 	Debug = [False,True][0]
-	hexadecimal = False #se 'True', transforma a cifra para hexadecimal# nao implementei direito essa parte, entao, deixe em False
+	hexadecimal = False #se 'True', transforma a cifra para hexadecimal ou decifra hexa #essa ideia caiu por terra entao nao usei
 	
 	#Leitura dos argumentos
 	try:
@@ -206,13 +210,15 @@ if __name__ == "__main__":
 	
 	tout = Processamento(modo=modo,chaves=chaves,plain=plain,from_binario=from_binario,debug=Debug)
 	
+	#print(type(tout),tout[:30], tout.isalpha(), tout.isnumeric(), tout.isalnum())
+	#exit()
 	if modo.upper()=='C':
 		f = open(out,'w')
 		for i in tout:
 			f.write(i)
 	elif modo.upper()=='D':
 		if tout.isnumeric():
-			#decifrou e so tem numero na saida==entao deve ser binario em formato texto
+			#decifrou e so tem numero na saida==entao deve ser binario
 			f = open(out,'wb')
 			tempor = tout.split()
 			by_arr = []
