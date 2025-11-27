@@ -149,6 +149,7 @@ class Vetor:
             elif aux[j]<0:
                 # o vetor está a esquerda da origem
                 self.direita(aux[j])
+
     def ajustar_tamanho(self,vetor):
         '''Força ambos vetores a manter o mesmo número de coordenadas para evitar erros'''
         n1, n2 = len(self.pe), len(vetor.pe)
@@ -161,7 +162,7 @@ class Vetor:
                 else:
                     auxpe.append(vetor.pe[j])
                     auxpo.append(vetor.ponta[j])
-            vetor.pe, vetor.ponta = auxpe, auxpo
+            vetor.pe, vetor.ponta = tuple(auxpe), tuple(auxpo)
         elif n2 > n1:
             auxpe, auxpo = [], []
             for j in range(len(vetor.pe)):
@@ -171,7 +172,7 @@ class Vetor:
                 else:
                     auxpe.append(self.pe[j])
                     auxpo.append(self.ponta[j])
-            self.pe, self.ponta = auxpe, auxpo
+            self.pe, self.ponta = tuple(auxpe), tuple(auxpo)
 
     def __rmul__(self,vetor):
         ''' Caso esteja por exemplo vet/escalar*vetor, colocamos para repetir o método de
@@ -250,7 +251,9 @@ def Mostre_vetor(vetores=[], referencia = Vetor((0,0)), pontos=[], conjuntos_pon
     vetores: um objeto de Vetor ou uma listas destes
     referencia: caso seja usado alguma herança mudando o tipo do vetor, coloque um exemplo de objeto aqui
     pontos: para plotar pontos extras representando retas ou curvas, será esperado o formato [(x1,y1),...] para um tipo ou [[(xa1,ya1),...],[(xb1,yb1),...]] para vários
-    conjuntos_pontos: facilita a verificação da lista de pontos, definindo quantos conjuntos será dado. Ex: para duas retas ou uma reta + uma curva espera-se o valor 2'''
+    
+    COMO 'pontos' PODE SER UMA LISTA OU UMA LISTA DE LISTAS, PRECISEI DO ARGUMENTO EXTRA ABAIXO:
+        conjuntos_pontos: facilita a verificação da lista de pontos, definindo quantos conjuntos será dado. Ex: para duas retas ou uma reta + uma curva espera-se o valor 2'''
     fig = plt.figure(dpi=100)
     if type(vetores) == type(referencia):
         '''O método recebeu só um vetor. Pela definição do método 'quiver' precisamos deixar no formato a seguir'''
@@ -363,7 +366,76 @@ def reta2D(X=[-5+i for i in range(11)], ref=(0,0), vetor= Vetor((1,0))):
     return lista
 
 def Mostre_vetor3D(vetores=[], referencia = Vetor((0,0,0)), pontos=[], conjuntos_pontos=1):
-    # a fazer
+    '''Adicionar retas e planos !!!!!!!!!!!
+    !!!!!!!!!!!111
+    !!!!!!!!!!!!1
+    '''
+    fig = plt.figure(dpi=100)
+    ax  = fig.add_subplot(projection='3d') #fig.gca(projection='3d')
+
+    cores =['b','g','r','c','m','y','k']
+    indice_cor=-1
+    if type(vetores) == type(referencia):
+        vetores = [vetores]
+    elif type(vetores) != type([]):
+        print("Método só aceite Vetores e lista de vetores, tipo dado:", type(vetores))
+        return 404
+    
+    # lista de algo, precisamos verificar se sao vetores
+    mx, my, mz = 0 ,0 ,0
+    eixox_0 , eixox_f = 10000000, -10000000
+    eixoy_0 , eixoy_f = 10000000, -10000000
+    eixoz_0 , eixoz_f = 10000000, -10000000
+    for v in vetores:
+        indice_cor+=1
+        if type(v) != type(referencia):
+            print("Tipo do elemento da lista não é vetor, tipo dado:", type(v))
+            return 404
+        if len(v.pe) < 3:
+            v.ajustar_tamanho(referencia)
+
+        o = [v.pe[0]], [v.pe[1]], [v.pe[2]]
+        p = [v.ponta[0]-v.pe[0]], [v.ponta[1]-v.pe[1]], [v.ponta[2]-v.pe[2]] 
+        #length=vetores.tamanho()
+        plt.quiver(*o,*p, color=cores[indice_cor],label=v)
+        # margem baseada no maior vetor
+        mx = max(v.ponta[0]-v.pe[0], mx)
+        my = max(v.ponta[1]-v.pe[1], my)
+        mz = max(v.ponta[2]-v.pe[2], mz)
+        eixox_0 = min(eixox_0,v.pe[0],v.ponta[0])
+        eixox_f = max(eixox_f,v.pe[0],v.ponta[0])
+        eixoy_0 = min(eixoy_0,v.pe[1],v.ponta[1])
+        eixoy_f = max(eixoy_f,v.pe[1],v.ponta[1])
+        eixoz_0 = min(eixoz_0,v.pe[2],v.ponta[2])
+        eixoz_f = max(eixoz_f,v.pe[2],v.ponta[2])
+    #limites do eixo x
+    ax.set_xlim([eixox_0-mx, eixox_f+mx])
+    #limites do eixo y
+    ax.set_ylim([eixoy_0-my, eixoy_f+my])        
+    #limites do eixo z
+    ax.set_zlim([eixoz_0-mz, eixoz_f+mz])        
+    
+    #ax.plot(x_list, y_list, z_list, label="reta r")
+    '''Argumento 'loc' define posição da legenda:
+        Best 0 | Upper right 1 | Upper left 2 | Lower left 3
+        Lower right 4 | Right 5 | Center left 6 | Center right 7
+        Lower center 8 | Upper center 9 | center 10'''
+    #'frameon' cria uma caixa para a legenda
+    #ax.legend(loc=0,frameon=False,mode="expand")
+    ax.legend(bbox_to_anchor=(0.4, 1), borderaxespad=0)
+    
+    # Nomeando o grafico e seus eixos 
+    fig.suptitle("Representação 3D", fontsize=12)
+    ax.set_xlabel("X", fontsize=12)
+    ax.set_ylabel("Y", fontsize=12)
+    ax.set_zlabel("Z", fontsize=12)
+    
+    # texto flutuante
+    #fig.text(0.07, 0.72, text, fontsize=12)
+
+    # Para salvar a imagem diretamente
+    #plt.savefig("nome_do_arquivo.jpeg",bbox_inches='tight')
+    plt.show()
     return 0
 
 if __name__ == "__main__":
@@ -375,7 +447,10 @@ if __name__ == "__main__":
     #Mostre_vetor(vetores=a,pontos=r)
     #print(r)
     #print(s)
-    Mostre_vetor(vetores=[a,b],pontos=[r,s],conjuntos_pontos=2)
+    #Mostre_vetor(vetores=[a,b],pontos=[r,s],conjuntos_pontos=2)
+    d = Vetor((1,0,1), nome='d')
+    e = Vetor((1,1,0), nome='e')
+    Mostre_vetor3D(vetores=[d,e])
     '''x = Vetor((1,0,0), nome='x')
     y = Vetor((0,1,0), nome='y')
     z = x.produto_vetorial(y)
