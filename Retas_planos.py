@@ -356,7 +356,7 @@ def reta2D(X=[-5+i for i in range(11)], ref=(0,0), vetor= Vetor((1,0))):
     vx = vetor.ponta[0] - vetor.pe[0]
     if vx==0:
         print("Componente x do Vetor é zero")
-        vx=X[-1]/100 # para evitar divisao por zero
+        vx=0.001 # para evitar divisao por zero
         print("Foi utilizado:", vx, 'no lugar')
     vy = vetor.ponta[1] - vetor.pe[1]
     lista = []
@@ -365,11 +365,75 @@ def reta2D(X=[-5+i for i in range(11)], ref=(0,0), vetor= Vetor((1,0))):
         lista.append((j,y))
     return lista
 
-def Mostre_vetor3D(vetores=[], referencia = Vetor((0,0,0)), pontos=[], conjuntos_pontos=1):
-    '''Adicionar retas e planos !!!!!!!!!!!
-    !!!!!!!!!!!111
-    !!!!!!!!!!!!1
-    '''
+# reta: r(x,y,z) = (x0,y0,z0) + c*Vetor(vx(ponta-pe),vy(ponta-pe),vz(ponta-pe))
+#      x = x0 + c*vx(ponta-pe)
+#      y = y0 + c*vy(ponta-pe)
+#      z = z0 + c*vz(ponta-pe)
+#  (x-x0)/vx(ponta-pe) = (y-y0)/vy(ponta-pe)
+#  (z-z0)/vz(ponta-pe) = (y-y0)/vy(ponta-pe)
+# y = y0 + vy(ponta-pe) * (x-x0)/vx(ponta-pe)
+# z = z0 + vz(ponta-pe) * (y-y0)/vy(ponta-pe)
+def reta3D(X=[-5+i for i in range(11)], ref=(0,0,0), vetor= Vetor((1,0,0))):
+    vx = vetor.ponta[0] - vetor.pe[0]
+    vy = vetor.ponta[1] - vetor.pe[1]
+    vz = vetor.ponta[2] - vetor.pe[2]
+    counter=-1
+    for v in [vx,vy]:
+        counter+=1
+        if v==0:
+            s=''
+            if counter==0:
+                vx=0.001 # para evitar divisao por zero
+                s='x'
+            elif counter==1:
+                vy=0.001
+                s='y'
+            v=0.001
+            print("Componente %s do Vetor é zero"%s)
+            print("Foi utilizado:", v, 'no lugar')
+    
+    lista = []
+    for j in X:
+        y = ref[1] + vy*(j-ref[0])/vx
+        z = ref[2] + vz*(y-ref[1])/vy
+        lista.append((j,y,z))
+    return lista
+
+# plano : pi = ref + lambda*v1 + delta*v2
+# a = v1y*v2z -v1z*v2y 
+# b = v1z*v2x -v1x*v2z
+# c = v1x*v2y -v1y*v2x
+# d = -ref_x*a -ref_y*b -ref_z*c
+# Equacao do plano
+# a*x +b*y + c*z +d =0
+# z = (-a/c)*x -(b/c)*y -d/c
+# z = Px*x +Py*y +Pz
+# lista de x é dada
+# lista de y é dada
+import numpy as np
+def Plano(x=np.linspace(-5, 5, 10), y=np.linspace(-5, 5, 10),
+          ref=(0,0,0), v1 = Vetor((1,0,0)), v2= Vetor((0,1,0))):
+    '''Não funciona sem usar a lista do numpy'''
+    if len(x) != len(y):
+        print("A lista X precisa ter o mesmo tamanho da lista Y")
+        return 404
+    x, y = np.meshgrid(x, y)
+    v1x = v1.ponta[0] - v1.pe[0]
+    v1y = v1.ponta[1] - v1.pe[1]
+    v1z = v1.ponta[2] - v1.pe[2]
+    v2x = v2.ponta[0] - v2.pe[0]
+    v2y = v2.ponta[1] - v2.pe[1]
+    v2z = v2.ponta[2] - v2.pe[2]
+    a = v1y*v2z -v1z*v2y 
+    b = v1z*v2x -v1x*v2z
+    c = v1x*v2y -v1y*v2x
+    d = -ref[0]*a -ref[1]*b -ref[2]*c
+    P = (-a/c,-b/c,-d/c)
+    z = P[0]*x +P[1]*y +P[2]
+    return (x,y,z)
+
+def Mostre_vetor3D(vetores=[], referencia = Vetor((0,0,0)), pontos=[], conjuntos_pontos=1,
+                   usar_planos=False, planos= Plano()):
     fig = plt.figure(dpi=100)
     ax  = fig.add_subplot(projection='3d') #fig.gca(projection='3d')
 
@@ -381,6 +445,13 @@ def Mostre_vetor3D(vetores=[], referencia = Vetor((0,0,0)), pontos=[], conjuntos
         print("Método só aceite Vetores e lista de vetores, tipo dado:", type(vetores))
         return 404
     
+    if usar_planos:
+        if type(planos) == type(Plano()):
+            planos = [planos]
+        for p in planos:
+            # 'alpha=0.7' deixa o plano semi transparente
+            ax.plot_surface(p[0], p[1], p[2],alpha=0.7)
+
     # lista de algo, precisamos verificar se sao vetores
     mx, my, mz = 0 ,0 ,0
     eixox_0 , eixox_f = 10000000, -10000000
@@ -408,14 +479,31 @@ def Mostre_vetor3D(vetores=[], referencia = Vetor((0,0,0)), pontos=[], conjuntos
         eixoy_f = max(eixoy_f,v.pe[1],v.ponta[1])
         eixoz_0 = min(eixoz_0,v.pe[2],v.ponta[2])
         eixoz_f = max(eixoz_f,v.pe[2],v.ponta[2])
-    #limites do eixo x
-    ax.set_xlim([eixox_0-mx, eixox_f+mx])
-    #limites do eixo y
-    ax.set_ylim([eixoy_0-my, eixoy_f+my])        
-    #limites do eixo z
-    ax.set_zlim([eixoz_0-mz, eixoz_f+mz])        
+    apenas_vetor = True
+    if len(pontos)!=0:
+        apenas_vetor = False
+        for i in range(conjuntos_pontos):
+            a_x, a_y, a_z = [], [], []
+            teste = pontos[i]
+            if i==0:
+                #pontos: lista de pontos
+                #pontos: lista de listas de pontos
+                if len(teste)==3:
+                    teste = pontos
+            for j in teste:
+                #teste: [(x,y,z),...]
+                a_x.append(j[0])
+                a_y.append(j[1])
+                a_z.append(j[2])
+            plt.plot(a_x,a_y,a_z,'o')
     
-    #ax.plot(x_list, y_list, z_list, label="reta r")
+    if apenas_vetor:
+        #limites do eixo x
+        ax.set_xlim([eixox_0-mx, eixox_f+mx])
+        #limites do eixo y
+        ax.set_ylim([eixoy_0-my, eixoy_f+my])        
+        #limites do eixo z
+        ax.set_zlim([eixoz_0-mz, eixoz_f+mz])        
     '''Argumento 'loc' define posição da legenda:
         Best 0 | Upper right 1 | Upper left 2 | Lower left 3
         Lower right 4 | Right 5 | Center left 6 | Center right 7
@@ -450,7 +538,11 @@ if __name__ == "__main__":
     #Mostre_vetor(vetores=[a,b],pontos=[r,s],conjuntos_pontos=2)
     d = Vetor((1,0,1), nome='d')
     e = Vetor((1,1,0), nome='e')
-    Mostre_vetor3D(vetores=[d,e])
+    r3= reta3D(X=[-3+i for i in range(7)], vetor=d)
+    s3= reta3D(X=[-3+i for i in range(7)], vetor=e)
+    Pi = Plano(v1=d,v2=e) 
+    Mostre_vetor3D(vetores=[d,e],pontos=[r3,s3],conjuntos_pontos=2, usar_planos=True,
+                   planos=Pi)
     '''x = Vetor((1,0,0), nome='x')
     y = Vetor((0,1,0), nome='y')
     z = x.produto_vetorial(y)
